@@ -1,3 +1,6 @@
+const searchBooks = require("../public_api/bookSearch");
+
+
 function returnResponse(request, h){
   const response = h.response({
     status: 'success',
@@ -8,4 +11,16 @@ function returnResponse(request, h){
   return response;
 }
 
-module.exports = { returnResponse };
+function testHandler(request, h){
+  searchBooks("three body problem");
+
+  const response = h.response({
+    status: 'success',
+    message: 'successfully sent an API call to open library',
+  })
+  response.code(200);
+
+  return response;
+}
+
+module.exports = { returnResponse, testHandler };

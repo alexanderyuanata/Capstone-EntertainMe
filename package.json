@@ -15,6 +15,7 @@
   "dependencies": {
     "@hapi/hapi": "^21.3.9",
     "@tensorflow/tfjs-node": "^4.19.0",
+    "axios": "^1.7.2",
     "dotenv": "^16.4.5"
   }
 }
