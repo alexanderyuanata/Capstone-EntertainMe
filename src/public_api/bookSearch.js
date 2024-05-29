@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
 
 //constants
 const BOOK_QUERY_LIMIT = 10;
@@ -40,21 +41,13 @@ async function searchBooks(query) {
 
     })
     .catch((error) => {
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.log(error.response.message);
-      } else if (error.request) {
-        console.log(error.request.message);
-      } else {
-        console.log("Error: ", error.message);
-      }
-      console.log(error.config);
+      handleAxiosGetError(error);
     })
     .finally(() => {
-      
+      //do something when everything is done
     });
    
+    //return fetched data
     return bookList;
 }
 
@@ -68,17 +61,7 @@ async function getBook(key) {
       details.description = response.data.description;
     })
     .catch((error) => {
-      console.log("error caught!");
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.log(error.response.message);
-      } else if (error.request) {
-        console.log(error.request.message);
-      } else {
-        console.log("Error: ", error.message);
-      }
-      console.log(error.config);
+      handleAxiosGetError(error);
     })
     .finally(() => {
       console.log("-------------------request end----------------------");

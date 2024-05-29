@@ -1,4 +1,4 @@
-const { returnResponse, getRandomBooks, getBookDetail } = require('./handler')
+const { returnResponse, getBooksRecommendation, getBookDetail, getMoviesRecommended, getMovieDetail,  } = require('./handler')
 
 const routes = [
   {
@@ -9,12 +9,22 @@ const routes = [
   {
     path: '/recommend/books',
     method: 'GET',
-    handler: getRandomBooks,
+    handler: getBooksRecommendation,
   },
   {
     path: '/books/detail',
     method: 'GET',
     handler: getBookDetail,
+  },
+  {
+    path: '/recommend/movies',
+    method: 'GET',
+    handler: getMoviesRecommended,
+  },
+  {
+    path: '/movies/detail',
+    method: 'GET',
+    handler: getMovieDetail,
   },
 ]
 
