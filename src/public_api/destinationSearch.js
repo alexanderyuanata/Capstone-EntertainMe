@@ -33,7 +33,7 @@ async function searchDestinations (query) {
 async function searchDestinationDetail(key){
     let destinationDetail;
 
-    await axios.get(`${baseUrl}/en/places/xid/Q372040?apikey=${apiKey}`,{
+    await axios.get(`${baseUrl}/en/places/xid/{xid}apikey=${apiKey}`,{
     })
     .then((response)=>{
         const destinationData = response.data.detail;
