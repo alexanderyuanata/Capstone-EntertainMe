@@ -1,4 +1,4 @@
-const { searchBooks, getBook } = require("../public_api/bookSearch");
+const { searchBooks, getBook, doQuery } = require("../public_api/bookSearch");
 const { searchMovies, searchMovieDetail } = require("../public_api/movieSearch");
 
 function returnResponse(request, h){
@@ -95,4 +95,14 @@ async function getMovieDetail(request, h){
   return response;
 }
 
-module.exports = { returnResponse, getBooksRecommendation, getBookDetail, getMoviesRecommended, getMovieDetail };
+async function performQuery(request, h){
+  let content = await doQuery();
+  const response = h.response({
+    status: 'success',
+    message: 'contacted cloud run API',
+    data: content,
+  })
+  response.code(200);
+}
+
+module.exports = { returnResponse, getBooksRecommendation, getBookDetail, getMoviesRecommended, getMovieDetail, performQuery };
