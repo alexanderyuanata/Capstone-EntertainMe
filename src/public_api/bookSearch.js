@@ -70,23 +70,4 @@ async function getBook(key) {
     return details;
 }
 
-async function doQuery(){
-  let message;
-
-  await axios
-    .get(`https://gateway-api-4nqq6tztla-et.a.run.app/`)
-    .then((response) => {
-      //get the description
-      message = response.data;
-    })
-    .catch((error) => {
-      handleAxiosGetError(error);
-    })
-    .finally(() => {
-      console.log("-------------------request end----------------------");
-    });
-  
-  return message;
-}
-
-module.exports = { searchBooks, getBook, doQuery };
+module.exports = { searchBooks, getBook };
