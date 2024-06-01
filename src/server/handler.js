@@ -106,6 +106,8 @@ async function performQuery(request, h){
       message: 'failed to contact database API',
     })
     response.code(500);
+
+    return response;
   }
 
   const response = h.response({
