@@ -4,7 +4,7 @@ const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
 require('dotenv').config();
 
 //constants
-const BOOK_QUERY_LIMIT = 8;
+const BOOK_QUERY_LIMIT = 1;
 
 const instance = axios.create({
   baseURL: process.env.GATEWAY_URL || "http://localhost:10600",
@@ -62,14 +62,16 @@ async function searchBooks(recommendedTitles) {
           const detail = await getBook(title.book);
 
           if (detail == undefined) {
-            title.cover_url = undefined;
-            title.publish_year = undefined;
+            title.coverUrl = undefined;
+            title.publishYear = undefined;
+            title.infoUrl = undefined;
             console.log("no detail found, none assigned");
             return;
           }
 
-          title.cover_url = detail.coverUrl;
-          title.publish_year = detail.year;
+          title.coverUrl = detail.coverUrl;
+          title.publishYear = detail.publishYear;
+          title.infoUrl = detail.infoUrl;
         });
 
         // Wait for all promises to resolve before proceeding
@@ -91,42 +93,51 @@ async function searchBooks(recommendedTitles) {
 }
 
 async function getBook(title) {
-  //get the book from open library
+  //encode the title to a safe format
+  //all spaces are replaced with +, and all special characters are replaced
   const encodedTitle = customEncodeURIComponent(title);
-  console.log(encodedTitle);
+  console.log('> ' + encodedTitle);
+
   let details = {};
 
+  //send a call to the google API
   await axios
-    .get("https://openlibrary.org/search.json", {
+    .get("https://www.googleapis.com/books/v1/volumes", {
       params: {
-        title: encodedTitle,
-        limit: 1,
-        fields: "cover_i, publish_year",
-        lang: "eng",
+        q: `intitle:${encodedTitle}`,
+        maxResults: 1,
+        fields: 'items(volumeInfo/infoLink,volumeInfo/publishedDate,volumeInfo/imageLinks/thumbnail)',
+        langRestrict: "en",
       },
       //timeout: 1000, timeout is broken DO NOT USE
     })
     .then((response) => {
-      //get the cover id and the publishing year
-      console.log(response.data.docs);
+      //extract data from the response
+      const bookData = getFirstElement(response.data.items).volumeInfo;
 
-      const cover_id = getFirstElement(response.data.docs).cover_i;
-      const year = getFirstElement(response.data.docs).publish_year;
+      //extract fields
+      const info_link = getFirstElement(bookData.infoLink);
+      const cover_link = getFirstElement(bookData.imageLinks.thumbnail);
+      const year = getFirstElement(bookData.publishedDate);
 
       //assign if we got something
-      if (cover_id != undefined) {
-        details.coverUrl = `https://covers.openlibrary.org/b/id/${cover_id}-M.jpg`;
+      if (cover_link != undefined) {
+        details.coverUrl = cover_link;
       }
 
       if (year != undefined) {
-        details.year = getFirstElement(getFirstElement(year));
+        details.publishYear = year;
+      }
+
+      if (info_link != undefined){
+        details.infoUrl = info_link;
       }
     })
     .catch((error) => {
       handleAxiosGetError(error);
     })
     .finally(() => {
-      console.log("-------------------request end----------------------");
+      
     });
 
     return details;

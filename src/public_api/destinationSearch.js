@@ -25,7 +25,7 @@ async function searchDestinations (query) {
         handleAxiosGetError(error);
     })
     .finally(()=>{
-        console.log('-----------------------end of request-----------------------');
+        
     });
 
     return destionationList;
@@ -51,7 +51,7 @@ async function searchDestinationDetail(key){
         handleAxiosGetError(error);
     })
     .finally(()=>{
-        console.log('-----------------------end of request-----------------------')
+        
     });
 
     return destinationDetail;

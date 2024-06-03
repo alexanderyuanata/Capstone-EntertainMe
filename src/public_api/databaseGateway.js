@@ -16,7 +16,7 @@ async function doQuery(){
       handleAxiosGetError(error);
     })
     .finally(() => {
-      console.log("-------------------request end----------------------");
+      
     });
   
   return message;
