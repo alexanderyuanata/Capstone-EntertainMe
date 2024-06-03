@@ -108,6 +108,7 @@ async function getBook(title) {
         maxResults: 1,
         fields: 'items(volumeInfo/infoLink,volumeInfo/publishedDate,volumeInfo/imageLinks/thumbnail)',
         langRestrict: "en",
+        key: process.env.GOOGLE_BOOKS_KEY,
       },
       //timeout: 1000, timeout is broken DO NOT USE
     })
