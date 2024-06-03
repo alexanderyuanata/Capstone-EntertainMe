@@ -1,7 +1,9 @@
 const Hapi = require('@hapi/hapi');
 const routes = require('../server/routes');
 const loadModel = require('../services/loadModel');
- 
+require('dotenv').config(); 
+
+
 (async () => {
     const server = Hapi.server({
         port: parseInt(process.env.PORT) || 8080,

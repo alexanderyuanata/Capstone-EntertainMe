@@ -1,8 +1,9 @@
 const axios = require("axios");
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
+require('dotenv').config();
 
-const apiKey = process.env.OTM_APIKEY
-const baseUrl = process.env.OTM_URL
+const apiKey = process.env.OTM_APIKEY;
+const baseUrl = process.env.OTM_URL;
 
 async function searchDestinations (query) {
     let destionationList = [];

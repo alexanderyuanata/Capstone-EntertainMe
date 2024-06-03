@@ -1,6 +1,8 @@
 const axios = require('axios');
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
 
+require('dotenv').config();
+
 async function doQuery(){
   let message;
 
