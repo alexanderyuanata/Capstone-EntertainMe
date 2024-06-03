@@ -2,43 +2,80 @@ const axios = require("axios");
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
 
 //constants
-const BOOK_QUERY_LIMIT = 10;
+const BOOK_QUERY_LIMIT = 8;
+
+const instance = axios.create({
+  baseURL: process.env.GATEWAY_URL || "http://localhost:10600",
+  timeout: 1000,
+});
 
 //function to check if parameter is an array and return the first element if so
 function getFirstElement(data) {
+  if (data == undefined) return undefined;
+
   return Array.isArray(data) ? data[0] : data;
 }
 
-//a function to search books from the OpenLibrary API
-async function searchBooks(query) {
-  let bookList = [];
+//function for better encoding URI components
+function customEncodeURIComponent(str) {
+  // Replace all non-alphanumeric characters except spaces with an empty string
+  let cleanedStr = str.replace(/[^a-zA-Z0-9 ]/g, "");
+  // Replace spaces with '+'
+  return cleanedStr.replace(/ /g, "+");
+}
 
-  await axios
-    .get("https://openlibrary.org/search.json", {
+//a function to search books from the database
+async function searchBooks(recommendedTitles) {
+  let titleDetails = [];
+
+  //for testing only, should be replace with recommendedTitles when model is ready
+  const testTitles = ["Harry Potter", "Narnia", "Hunger Games"];
+
+  //assemble a query param with identical keys
+  // var titleArray = new URLSearchParams();
+  // testTitles.forEach(title => {
+  //   titleArray.append('title', `${title}`);
+  // });
+
+  //send a get request to the gateway API
+  await instance
+    .get("/query/books", {
       params: {
-        q: query.subject,
-        sort: "rating",
-        language: "eng",
-        fields: "key,title,cover_i,first_sentence,author_name,publish_year",
-        limit: BOOK_QUERY_LIMIT,
+        title: testTitles,
       },
     })
-    .then((response) => {
+    .then(async (response) => {
+      //if the server doesn't return a successful query
+      if (response.status != 200) {
+        throw err;
+      }
+
       //get the array of books that the public API returns
-      const bookResult = response.data.docs;
+      const bookResult = response.data.titles;
 
-      //create a new array by filtering only the necessary info and assembling a cover URL
-      bookResult.forEach((book) => {
-        bookList.push({
-          title: book.title,
-          author: getFirstElement(book.author_name),
-          cover_url: `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`,
-          publish_year: getFirstElement(book.publish_year),
-          first_sentence: getFirstElement(book.first_sentence),
-          key: book.key,
+      //process data to get the cover and detail
+      if (Array.isArray(bookResult)) {
+        // Use map instead of forEach to return an array of promises
+        const promises = bookResult.map(async (title) => {
+          const detail = await getBook(title.book);
+
+          if (detail == undefined) {
+            title.cover_url = undefined;
+            title.publish_year = undefined;
+            console.log("no detail found, none assigned");
+            return;
+          }
+
+          title.cover_url = detail.coverUrl;
+          title.publish_year = detail.year;
         });
-      });
 
+        // Wait for all promises to resolve before proceeding
+        await Promise.all(promises);
+      }
+
+      //assign processed data
+      titleDetails = bookResult;
     })
     .catch((error) => {
       handleAxiosGetError(error);
@@ -46,19 +83,42 @@ async function searchBooks(query) {
     .finally(() => {
       //do something when everything is done
     });
-   
-    //return fetched data
-    return bookList;
+
+  //return fetched data
+  return titleDetails;
 }
 
-async function getBook(key) {
-   //get the book from open library
-   let details = {};
+async function getBook(title) {
+  //get the book from open library
+  const encodedTitle = customEncodeURIComponent(title);
+  console.log(encodedTitle);
+  let details = {};
+
   await axios
-    .get(`https://openlibrary.org${key}.json`)
+    .get("https://openlibrary.org/search.json", {
+      params: {
+        title: encodedTitle,
+        limit: 1,
+        fields: "cover_i, publish_year",
+        lang: "eng",
+      },
+      //timeout: 1000, timeout is broken DO NOT USE
+    })
     .then((response) => {
-      //get the description
-      details.description = response.data.description;
+      //get the cover id and the publishing year
+      console.log(response.data.docs);
+
+      const cover_id = getFirstElement(response.data.docs).cover_i;
+      const year = getFirstElement(response.data.docs).publish_year;
+
+      //assign if we got something
+      if (cover_id != undefined) {
+        details.coverUrl = `https://covers.openlibrary.org/b/id/${cover_id}-M.jpg`;
+      }
+
+      if (year != undefined) {
+        details.year = getFirstElement(getFirstElement(year));
+      }
     })
     .catch((error) => {
       handleAxiosGetError(error);

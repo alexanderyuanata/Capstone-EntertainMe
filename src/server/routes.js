@@ -12,11 +12,6 @@ const routes = [
     handler: getBooksRecommendation,
   },
   {
-    path: '/books/detail',
-    method: 'GET',
-    handler: getBookDetail,
-  },
-  {
     path: '/recommend/movies',
     method: 'GET',
     handler: getMoviesRecommended,
