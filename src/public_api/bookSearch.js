@@ -60,6 +60,7 @@ async function searchBooks(recommendedTitles) {
         // Use map instead of forEach to return an array of promises
         const promises = bookResult.map(async (title) => {
           const detail = await getBook(title.book);
+          console.log('detail of ' + title.book + ': ' + detail);
 
           if (detail == undefined) {
             title.coverUrl = undefined;
@@ -107,7 +108,7 @@ async function getBook(title) {
         q: `intitle:${encodedTitle}`,
         maxResults: 1,
         fields: 'items(volumeInfo/infoLink,volumeInfo/publishedDate,volumeInfo/imageLinks/thumbnail)',
-        langRestrict: "en",
+        //langRestrict: "en", //for some reason this sometimes makes the search more restrictive
         key: process.env.GOOGLE_BOOKS_KEY,
       },
       //timeout: 1000, timeout is broken DO NOT USE
@@ -117,9 +118,9 @@ async function getBook(title) {
       const bookData = getFirstElement(response.data.items).volumeInfo;
 
       //extract fields
-      const info_link = getFirstElement(bookData.infoLink);
-      const cover_link = getFirstElement(bookData.imageLinks.thumbnail);
-      const year = getFirstElement(bookData.publishedDate);
+      const info_link = bookData?.infoLink ?? 'NO_LINK';
+      const cover_link = bookData?.imageLinks?.thumbnail ?? 'https://books.google.co.id/googlebooks/images/no_cover_thumb.gif';
+      const year = bookData?.publishedDate ?? 'NO_DATE';
 
       //assign if we got something
       if (cover_link != undefined) {
@@ -135,6 +136,7 @@ async function getBook(title) {
       }
     })
     .catch((error) => {
+      console.log('error in getting book detail');
       handleAxiosGetError(error);
     })
     .finally(() => {
