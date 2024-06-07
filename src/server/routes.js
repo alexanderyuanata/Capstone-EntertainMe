@@ -1,4 +1,4 @@
-const { returnResponse, getBooksRecommendation, getBookDetail, getMoviesRecommended, getMovieDetail, performQuery,  } = require('./handler')
+const { returnResponse, getBooksRecommendation, getBookDetail, getMoviesRecommended, getMovieDetail, performQuery, getTravelRecommendation,  } = require('./handler')
 
 const routes = [
   {
@@ -26,6 +26,11 @@ const routes = [
     method: 'GET',
     handler: performQuery,
   },
+  {
+    path: '/recommend/travel',
+    method: 'GET',
+    handler: getTravelRecommendation,
+  }
 ]
 
 module.exports = routes;

@@ -1,14 +1,19 @@
-const { string } = require('@tensorflow/tfjs-node');
+// const { string } = require('@tensorflow/tfjs-node');
 const database = require('../config/firebaseConfig');
 
+// for debugging only
+// database.ref("/Users/5tyMCCOkKtgAZWyzOfhFHaV9cCt2").once("value", function (snapshot) {
+//   console.log(snapshot.val());
+// });
 
 async function checkUid(uid) {
   try {
-    const snapshot = await database.ref(`/users/${uid}`).once('value');
+    const snapshot = await database.ref(`/Users/${uid}`).once('value');
+    console.log(snapshot.val());
     if (snapshot.exists()) {
-      return snapshot.val(); // Return user data if exists
+      return true // Return user data if exists
     } else {
-      throw new Error('User not found');
+      return false;
     }
   } catch (error) {
     if (error.message === 'User not found') {
