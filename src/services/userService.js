@@ -9,7 +9,7 @@ const database = require('../config/firebaseConfig');
 async function checkUid(uid) {
   try {
     const snapshot = await database.ref(`/Users/${uid}`).once('value');
-    console.log(snapshot.val());
+    
     if (snapshot.exists()) {
       return true // Return user data if exists
     } else {
@@ -24,4 +24,24 @@ async function checkUid(uid) {
   }
 }
 
-module.exports = { checkUid };
+async function getStressSurvey(uid){
+  try {
+    console.log(uid + ' is looked for');
+    const snapshot = await database.ref('stress_surveys').orderByChild('user_id').equalTo(`${uid}`).once('value');
+    const surveyRef = snapshot.val();
+
+    //access the first key since the data we need is nested
+    const referenceKey = Object.keys(surveyRef)[0];
+    const surveyData = surveyRef[referenceKey];
+
+    if (snapshot.exists()) {
+      return surveyData; // Return user data if exists
+    } else {
+      return undefined;
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+module.exports = { checkUid, getStressSurvey };

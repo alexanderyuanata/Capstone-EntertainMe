@@ -7,7 +7,8 @@ const {
 
 
 const axios = require("axios");
-const { checkUid } = require("../services/userService");
+const { checkUid, getStressSurvey } = require("../services/userService");
+const { getRandomIntInclusive } = require("../services/miscellaneousFunc");
 
 function returnResponse(request, h) {
   const response = h.response({
@@ -261,6 +262,176 @@ async function getTravelRecommendation(request, h){
 
 }
 
+async function getStressPrediction(request, h){
+  //ambil uid dari request param, cek, klo gdk return 404 baru bilang uid gdk di database
+  const uid = request.query.uid;
+
+  //ingat await, pastikan uid ada dan data sudah diambil sebelum lanjut
+  if (!await checkUid(uid)){
+    //kalau uid gdk, return not found
+    const response = h.response({
+      status: "failure",
+      message: "no uid found in database",
+    });
+    response.code(404);
+  
+    return response;
+  }
+
+  //ambil data survey dari uid
+  const surveyData = await getStressSurvey(uid);
+
+  //kalau undefined berarti ada yg salah di database/server
+  if (surveyData == undefined){
+    const response = h.response({
+      status: "failure",
+      message: "something went wrong, no survey data found in database",
+    });
+    response.code(500);
+  
+    return response;
+  }
+
+  //proses data sebelum dikirim ke model
+  const payload = {};
+  let data;
+  let dataB;
+
+  //data durasi tidur
+  data = parseInt(surveyData["stress_first_question"], 10);
+  payload["sleep_duration"] = data;
+
+  //data kualitas tidur
+  data = surveyData["stress_second_question"];
+  switch(data){
+    case "Poor":
+      dataB = getRandomIntInclusive(1,4);
+      break;
+    case "Fair":
+      dataB = getRandomIntInclusive(5,7);
+      break;
+    case "Good":
+      dataB = getRandomIntInclusive(8,10);
+      break;
+    default:
+      dataB = getRandomIntInclusive(5,7);
+      break;
+  }
+  payload["sleep_quality"] = dataB;
+
+  //data aktivitas fisik
+  data = surveyData["stress_third_question"];
+  switch(data){
+    case "Lightly Active":
+      dataB = getRandomIntInclusive(10,40);
+      break;
+    case "Moderately Active":
+      dataB = getRandomIntInclusive(41,70);
+      break;
+    case "Heavily Active":
+      dataB = getRandomIntInclusive(71,100);
+      break;
+    default:
+      dataB = getRandomIntInclusive(41,70);
+      break;
+  }
+  payload["physical_activity"] = dataB;
+
+  //data kategori bmi
+  data = surveyData["stress_fourth_question"];
+  switch(data){
+    case "Normal":
+      dataB = 0;
+      break;
+    case "Overweight and Underweight":
+      dataB = 1;
+      break;
+    case "Obesity":
+      dataB = 2;
+      break;
+    default:
+      dataB = 0;
+      break;
+  }
+  payload["bmi"] = dataB;
+  
+  //data tekanan darah
+  data = surveyData["stress_fifth_question"];
+  switch(data){
+    case "Low":
+      dataB = getRandomIntInclusive(0,7);
+      break;
+    case "Normal":
+      dataB = getRandomIntInclusive(8,16);
+      break;
+    case "High":
+      dataB = getRandomIntInclusive(17,24);
+      break;
+    default:
+      dataB = getRandomIntInclusive(8,16);
+      break;
+  }
+  payload["blood_pressure"] = dataB;
+
+  //data denyut jantung
+  data = surveyData["stress_sixth_question"];
+  switch(data){
+    case "Low":
+      dataB = getRandomIntInclusive(30,59);
+      break;
+    case "Normal":
+      dataB = getRandomIntInclusive(60,79);
+      break;
+    case "High":
+      dataB = getRandomIntInclusive(80,95);
+      break;
+    default:
+      dataB = getRandomIntInclusive(60,79);
+      break;
+  }
+  payload["heart_rate"] = dataB;
+
+  //data langkah kaki
+  data = surveyData["stress_seventh_question"];
+  switch(data){
+    case "Rarely":
+      dataB = getRandomIntInclusive(1000,4000);
+      break;
+    case "Occasionally":
+      dataB = getRandomIntInclusive(4001,7000);
+      break;
+    case "Frequently":
+      dataB = getRandomIntInclusive(7001,10000);
+      break;
+    default:
+      dataB = getRandomIntInclusive(4001,7000);
+      break;
+  }
+  payload["daily_steps"] = dataB;
+
+  //data sleep disorder
+  data = surveyData["stress_eight_question"];
+  if (data == "Yes"){
+    payload["sleep_disorder"] = 1;
+  }
+  else {
+    payload["sleep_disorder"] = 0;
+  }
+
+  //finished processing, send to model and wait
+  console.log(payload);
+
+  //send back as response
+
+  const response = h.response({
+    status: "success",
+    message: "stress prediction successful",
+  });
+  response.code(200);
+
+  return response;
+}
+
 module.exports = {
   returnResponse,
   getBooksRecommendation,
@@ -268,5 +439,6 @@ module.exports = {
   getMoviesRecommended,
   getMovieDetail,
   performQuery,
-  getTravelRecommendation
+  getTravelRecommendation,
+  getStressPrediction
 };
