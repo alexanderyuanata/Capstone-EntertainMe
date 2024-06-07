@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
+const { checkUid } = require ("../services/userService");
 
 require('dotenv').config();
 
@@ -93,7 +94,12 @@ async function searchBooks(recommendedTitles) {
   return titleDetails;
 }
 
-async function getBook(title) {
+async function getBook(uid, title) {
+  // check if the UID is valid
+  const userValidation = await checkUid(uid);
+  if(userValidation.status !== undefined) {
+    return userValidation;
+  }
   //encode the title to a safe format
   //all spaces are replaced with +, and all special characters are replaced
   const encodedTitle = customEncodeURIComponent(title);
