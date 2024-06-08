@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
 const { checkUid } = require ("../services/userService");
+const { getFirstElement, customEncodeURIComponent } = require('../services/miscellaneousFunc')
 
 require('dotenv').config();
 
@@ -12,33 +13,12 @@ const instance = axios.create({
   timeout: 1000,
 });
 
-//function to check if parameter is an array and return the first element if so
-function getFirstElement(data) {
-  if (data == undefined) return undefined;
-
-  return Array.isArray(data) ? data[0] : data;
-}
-
-//function for better encoding URI components
-function customEncodeURIComponent(str) {
-  // Replace all non-alphanumeric characters except spaces with an empty string
-  let cleanedStr = str.replace(/[^a-zA-Z0-9 ]/g, "");
-  // Replace spaces with '+'
-  return cleanedStr.replace(/ /g, "+");
-}
-
 //a function to search books from the database
 async function searchBooks(recommendedTitles) {
   let titleDetails = [];
 
   //for testing only, should be replace with recommendedTitles when model is ready
   const testTitles = ["Harry Potter", "Narnia", "Hunger Games"];
-
-  //assemble a query param with identical keys
-  // var titleArray = new URLSearchParams();
-  // testTitles.forEach(title => {
-  //   titleArray.append('title', `${title}`);
-  // });
 
   //send a get request to the gateway API
   await instance
@@ -96,9 +76,16 @@ async function searchBooks(recommendedTitles) {
 
 async function getBook(uid, title) {
   // check if the UID is valid
-  const userValidation = await checkUid(uid);
-  if(userValidation.status !== undefined) {
-    return userValidation;
+  //ingat await, pastikan uid ada dan data sudah diambil sebelum lanjut
+  if (!await checkUid(uid)){
+    //kalau uid gdk, return not found
+    const response = h.response({
+      status: "failure",
+      message: "no uid found in database",
+    });
+    response.code(404);
+  
+    return response;
   }
   //encode the title to a safe format
   //all spaces are replaced with +, and all special characters are replaced

@@ -4,4 +4,19 @@ function getRandomIntInclusive(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-module.exports = { getRandomIntInclusive }
+//function to check if parameter is an array and return the first element if so
+function getFirstElement(data) {
+  if (data == undefined) return undefined;
+
+  return Array.isArray(data) ? data[0] : data;
+}
+
+//function for better encoding URI components
+function customEncodeURIComponent(str) {
+  // Replace all non-alphanumeric characters except spaces with an empty string
+  let cleanedStr = str.replace(/[^a-zA-Z0-9 ]/g, "");
+  // Replace spaces with '+'
+  return cleanedStr.replace(/ /g, "+");
+}
+
+module.exports = { getRandomIntInclusive, getFirstElement, customEncodeURIComponent }

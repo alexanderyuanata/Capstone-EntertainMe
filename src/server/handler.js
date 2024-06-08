@@ -9,6 +9,7 @@ const {
 const axios = require("axios");
 const { checkUid, getStressSurvey } = require("../services/userService");
 const { getRandomIntInclusive } = require("../services/miscellaneousFunc");
+const fetchStressPrediction = require("../public_api/stressPrediction");
 
 function returnResponse(request, h) {
   const response = h.response({
@@ -264,10 +265,10 @@ async function getTravelRecommendation(request, h){
 
 async function getStressPrediction(request, h){
   //ambil uid dari request param, cek, klo gdk return 404 baru bilang uid gdk di database
-  const uid = request.query.uid;
+  const user_id = request.query.uid;
 
   //ingat await, pastikan uid ada dan data sudah diambil sebelum lanjut
-  if (!await checkUid(uid)){
+  if (!await checkUid(user_id)){
     //kalau uid gdk, return not found
     const response = h.response({
       status: "failure",
@@ -279,7 +280,7 @@ async function getStressPrediction(request, h){
   }
 
   //ambil data survey dari uid
-  const surveyData = await getStressSurvey(uid);
+  const surveyData = await getStressSurvey(user_id);
 
   //kalau undefined berarti ada yg salah di database/server
   if (surveyData == undefined){
@@ -294,124 +295,124 @@ async function getStressPrediction(request, h){
 
   //proses data sebelum dikirim ke model
   const payload = {};
-  let data;
-  let dataB;
+  let rawData;
+  let processedData;
 
   //data durasi tidur
-  data = parseInt(surveyData["stress_first_question"], 10);
-  payload["sleep_duration"] = data;
+  rawData = parseInt(surveyData["stress_first_question"], 10);
+  payload["sleep_duration"] = rawData;
 
   //data kualitas tidur
-  data = surveyData["stress_second_question"];
-  switch(data){
+  rawData = surveyData["stress_second_question"];
+  switch(rawData){
     case "Poor":
-      dataB = getRandomIntInclusive(1,4);
+      processedData = getRandomIntInclusive(1,4);
       break;
     case "Fair":
-      dataB = getRandomIntInclusive(5,7);
+      processedData = getRandomIntInclusive(5,7);
       break;
     case "Good":
-      dataB = getRandomIntInclusive(8,10);
+      processedData = getRandomIntInclusive(8,10);
       break;
     default:
-      dataB = getRandomIntInclusive(5,7);
+      processedData = getRandomIntInclusive(5,7);
       break;
   }
-  payload["sleep_quality"] = dataB;
+  payload["sleep_quality"] = processedData;
 
   //data aktivitas fisik
-  data = surveyData["stress_third_question"];
-  switch(data){
+  rawData = surveyData["stress_third_question"];
+  switch(rawData){
     case "Lightly Active":
-      dataB = getRandomIntInclusive(10,40);
+      processedData = getRandomIntInclusive(10,40);
       break;
     case "Moderately Active":
-      dataB = getRandomIntInclusive(41,70);
+      processedData = getRandomIntInclusive(41,70);
       break;
     case "Heavily Active":
-      dataB = getRandomIntInclusive(71,100);
+      processedData = getRandomIntInclusive(71,100);
       break;
     default:
-      dataB = getRandomIntInclusive(41,70);
+      processedData = getRandomIntInclusive(41,70);
       break;
   }
-  payload["physical_activity"] = dataB;
+  payload["physical_activity"] = processedData;
 
   //data kategori bmi
-  data = surveyData["stress_fourth_question"];
-  switch(data){
+  rawData = surveyData["stress_fourth_question"];
+  switch(rawData){
     case "Normal":
-      dataB = 0;
+      processedData = 0;
       break;
     case "Overweight and Underweight":
-      dataB = 1;
+      processedData = 1;
       break;
     case "Obesity":
-      dataB = 2;
+      processedData = 2;
       break;
     default:
-      dataB = 0;
+      processedData = 0;
       break;
   }
-  payload["bmi"] = dataB;
+  payload["bmi"] = processedData;
   
   //data tekanan darah
-  data = surveyData["stress_fifth_question"];
-  switch(data){
+  rawData = surveyData["stress_fifth_question"];
+  switch(rawData){
     case "Low":
-      dataB = getRandomIntInclusive(0,7);
+      processedData = getRandomIntInclusive(0,7);
       break;
     case "Normal":
-      dataB = getRandomIntInclusive(8,16);
+      processedData = getRandomIntInclusive(8,16);
       break;
     case "High":
-      dataB = getRandomIntInclusive(17,24);
+      processedData = getRandomIntInclusive(17,24);
       break;
     default:
-      dataB = getRandomIntInclusive(8,16);
+      processedData = getRandomIntInclusive(8,16);
       break;
   }
-  payload["blood_pressure"] = dataB;
+  payload["blood_pressure"] = processedData;
 
   //data denyut jantung
-  data = surveyData["stress_sixth_question"];
-  switch(data){
+  rawData = surveyData["stress_sixth_question"];
+  switch(rawData){
     case "Low":
-      dataB = getRandomIntInclusive(30,59);
+      processedData = getRandomIntInclusive(30,59);
       break;
     case "Normal":
-      dataB = getRandomIntInclusive(60,79);
+      processedData = getRandomIntInclusive(60,79);
       break;
     case "High":
-      dataB = getRandomIntInclusive(80,95);
+      processedData = getRandomIntInclusive(80,95);
       break;
     default:
-      dataB = getRandomIntInclusive(60,79);
+      processedData = getRandomIntInclusive(60,79);
       break;
   }
-  payload["heart_rate"] = dataB;
+  payload["heart_rate"] = processedData;
 
   //data langkah kaki
-  data = surveyData["stress_seventh_question"];
-  switch(data){
+  rawData = surveyData["stress_seventh_question"];
+  switch(rawData){
     case "Rarely":
-      dataB = getRandomIntInclusive(1000,4000);
+      processedData = getRandomIntInclusive(1000,4000);
       break;
     case "Occasionally":
-      dataB = getRandomIntInclusive(4001,7000);
+      processedData = getRandomIntInclusive(4001,7000);
       break;
     case "Frequently":
-      dataB = getRandomIntInclusive(7001,10000);
+      processedData = getRandomIntInclusive(7001,10000);
       break;
     default:
-      dataB = getRandomIntInclusive(4001,7000);
+      processedData = getRandomIntInclusive(4001,7000);
       break;
   }
-  payload["daily_steps"] = dataB;
+  payload["daily_steps"] = processedData;
 
   //data sleep disorder
-  data = surveyData["stress_eight_question"];
-  if (data == "Yes"){
+  rawData = surveyData["stress_eight_question"];
+  if (rawData == "Yes"){
     payload["sleep_disorder"] = 1;
   }
   else {
@@ -419,13 +420,14 @@ async function getStressPrediction(request, h){
   }
 
   //finished processing, send to model and wait
-  console.log(payload);
+  const prediction = await fetchStressPrediction(payload);
+  console.log(prediction)
 
   //send back as response
-
   const response = h.response({
     status: "success",
     message: "stress prediction successful",
+    prediction: prediction,
   });
   response.code(200);
 
