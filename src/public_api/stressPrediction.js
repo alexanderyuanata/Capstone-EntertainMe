@@ -33,6 +33,7 @@ async function fetchStressPrediction(input_data){
     predictedStress = response.data.stress_level;
   })
   .catch((error) => {
+    console.log('> ' + error.message);
     handleAxiosGetError(error);
   })
   .finally(() => {

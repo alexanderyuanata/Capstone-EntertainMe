@@ -1,75 +1,93 @@
 const axios = require("axios");
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
+const { customEncodeURIComponent, deleteField, deleteObjectField } = require("../services/miscellaneousFunc");
 
 require('dotenv').config();
 
-const FILTER_TYPE='movie';
-const PLOT_TYPE='short';
+//constants
+const instance = axios.create({
+  baseURL: process.env.MOVIE_MODEL_URL || "http://localhost:5000",
+  timeout: 1000,
+});
 
-async function searchMovies(query){
-  let movieList;
+async function searchMovies(inputData){
+  let movieTitles = [];
+  console.log(inputData);
 
-  await axios.get(`http://www.omdbapi.com`,{
-    params: {
-      apikey: process.env.OMDB_KEY,
-      s: query,
-      type: FILTER_TYPE,
-      r: 'json',
-    },
-  })
-  .then((response)=>{
-    const movies = response.data.Search;
-    movieList = [];
-    
-    movies.forEach(movie => {
-      movieList.push({
-        title: movie.Title,
-        release_year: movie.Year,
-        poster_url: movie.Poster,
-        key: movie.imdbID,
-      });
+  //send a get request to the gateway API
+  await instance
+    .post(
+      "/recommend", 
+      inputData,
+      {
+      params: {
+        key: process.env.MOVIE_API_KEY,
+      },
+    })
+    .then(async (response) => {
+      //if the server doesn't return a successful query
+      if (response.status != 200) {
+        throw err;
+      }
+
+      //get the array of movies that the model API returns
+      let movieResult = response.data.recommendations;
+      
+      //process data to get the cover of each movie is possible
+      if (Array.isArray(movieResult)) {
+        // Use map instead of forEach to return an array of promises
+        const promises = movieResult.map(async (movie) => {
+          const coverUrl = await getMovieCover(movie.movie_name)
+          movie.cover_url = coverUrl;
+
+          deleteObjectField(movie, "combined_features");
+          deleteObjectField(movie, "similarity_score");
+        });
+
+        // Wait for all promises to resolve before proceeding
+        await Promise.all(promises);
+      }
+
+      //assign processed data
+      movieTitles = movieResult;
+    })
+    .catch((error) => {
+      handleAxiosGetError(error);
+    })
+    .finally(() => {
+      //do something when everything is done
     });
-  })
-  .catch((error)=>{
-    handleAxiosGetError(error);
-  })
-  .finally(()=>{
-    console.log('-----------------------end of request-----------------------');
-  });
 
-  return movieList;
+  //return fetched data
+  return movieTitles;
 }
 
-async function searchMovieDetail(key){
-  let movieDetail;
+async function getMovieCover(title){
+  let coverUrl;
 
   await axios.get(`http://www.omdbapi.com`,{
     params: {
       apikey: process.env.OMDB_KEY,
-      i: key,
-      plot: PLOT_TYPE,
+      t: customEncodeURIComponent(title),
       r: 'json',
     },
   })
   .then((response)=>{
-    const movieData = response.data;
+    coverUrl = response.data.Poster;
 
-    movieDetail = {
-      runtime: movieData.Runtime,
-      genre: movieData.Genre,
-      synopsis: movieData.Plot,
-      language: movieData.Language,
-      rating: movieData.imdbRating,
-    };
+    if (coverUrl == undefined){
+      coverUrl = "";
+    }
   })
   .catch((error)=>{
+    console.error("movie cover get error");
     handleAxiosGetError(error);
   })
   .finally(()=>{
-    console.log('-----------------------end of request-----------------------');
+    //cover request
   });
 
-  return movieDetail;
+  return coverUrl;
 }
 
-module.exports = { searchMovies, searchMovieDetail };
+module.exports = { searchMovies, getMovieCover };

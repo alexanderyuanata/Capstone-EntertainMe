@@ -19,4 +19,11 @@ function customEncodeURIComponent(str) {
   return cleanedStr.replace(/ /g, "+");
 }
 
-module.exports = { getRandomIntInclusive, getFirstElement, customEncodeURIComponent }
+//function to delete a field from an object if it exists
+function deleteObjectField(obj, field) {
+  if (obj.hasOwnProperty(field)) {
+      delete obj[field];
+  }
+}
+
+module.exports = { getRandomIntInclusive, getFirstElement, customEncodeURIComponent, deleteObjectField }
