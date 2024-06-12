@@ -67,7 +67,7 @@ async function getBooksRecommendation(request, h) {
 
   // preprocess our data
   book_first_question == "No, I need recommendations"
-    ? (bookPref.text = "")
+    ? (bookPref.text = "random")
     : (bookPref.text = book_first_question);
 
   if (book_second_question != "No, I need recommendations") {
