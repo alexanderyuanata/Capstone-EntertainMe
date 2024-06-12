@@ -279,21 +279,142 @@ async function getTravelRecommendation(request, h) {
   // aman, lanjut
 
   // TODO, ambil data dari database disini, hanya berkaitan dengan survey lokasi wisata
+  const surveyData = await getPreferencesSurvey(user_id);
+  if (surveyData == undefined) {
+    const response = h.response({
+      status: "failure",
+      message: "something went wrong, no survey data found in database",
+    });
+    response.code(500);
+
+    return response;
+  }
+
+  const {
+    travel_first_question,
+    travel_second_question,
+    travel_third_question,
+    travel_fourth_question,
+    travel_fifth_question,
+    travel_sixth_question,
+  } = surveyData;
+  
+  let travelPref ={};
+
+  let text = "";
+  if (travel_first_question == "No, I need recomendations") {
+    travelPref.place_name = travel_first_question;
+  } else {
+    text = travel_first_question;
+  }
+
+  if (travel_second_question== "No, I need recomendations") {
+    travelPref.activity_type = "";
+  } else {
+    travelPref.activity_type = travel_second_question;
+  }
+
+  travelPref.category = travel_third_question;
+
+  travelPref.city = travel_fourth_question;
+
+  switch (travel_fifth_question) {
+    case "3 stars and above":
+      travelPref.rating_preference = 3;
+      break;
+    case "4 stars and above":
+      travelPref.rating_preference = 4;
+      break;
+    case "5 stars":
+      travelPref.rating_preference = 5;
+      break;
+    default:
+      travelPref.rating_preference = 0;
+      break;
+  }
+
+  switch (travel_sixth_question) {
+    case "More than 10 reviews":
+      travelPref.review_preference = 10;
+      break;
+    case "More than 20 reviews":
+      travelPref.review_preference = 20;
+      break;
+    default:
+      travelPref.review_preference = 0;
+      break;
+  }
+  console.log(travelPref);
+
 
   // TODO, susun jadi json body yg formatnya seperti ini, utk isinya silakan lihat dokumentasi dari tim ML
+  const jsonBody = {
+    text: `Saya ingin pergi ke tempat yang ${text}.`,
+    city: travelPref.city,
+    rating_preference: travelPref.rating_preference,
+    review_preference: travelPref.review_preference
+  };
+  console.log(jsonBody);
   // "text" itu HARUS ADA, kalau nggak ada modelnya g kerja, pastiin minimal text ada, kalau gdk balekin 400 aja
   // {
+    if (!text) {
+      const response = h.response({
+        status: "failure",
+        message: "text is required for the model to work"
+      });
+      response.code(400);
+      return response;
+    }
   //   "text": "Saya ingin pergi ke tempat yang berhubungan dengan sejarah dan budaya.",
   //   "city": "Jakarta",
   //   "rating_preference": "4 stars and above",
   //   "review_preference": "More than 20 reviews"
   // }
 
+  
+
+  
+
   // TODO buat POST request dengan body pakai json di atas ke https://travel-recommendation-4nqq6tztla-et.a.run.app?key=API_KEY
   // api key dalam bentuk environment variable (ini ada dalam .gitignore, bisa dibuat di lokal buat ujicoba tapi jangan dipush)
   // untuk .env ada sendiri di cloud, aku yg samain, yg penting API_KEY jangan di expose di code (best practice)
-
+  try {
+    const apiKey = process.env.TRAVEL_APIKEY;
+    const apiUrl = `https://travel-recommendation-4nqq6tztla-et.a.run.app key=${apiKey}`;
   // handle semua kejadian dalam request (time out, failure, etc sesuai yg lu pikirin)
+    const apiResponse = await axios.post(apiUrl, jsonBody)
+    const arrayElement = {
+      City: arrayElement.City,
+      Coordinate: arrayElement.Coordinate,
+      Description: arrayElement.Description,
+      Place_Name: arrayElement.Place_Name,
+      Price: arrayElement.Price,
+      Rating_Count: arrayElement.Rating_Count,
+      Ratings: arrayElement.Ratings,
+      Time_Minutes: arrayElement.Time_Minutes
+    };
+    const finalRecommendation = apiResponse;
+
+    const response = h.response({
+      status: "success",
+      message: "travel recommendation successfully returned",
+      data: finalRecommendation,
+    });
+
+    response.code(200);
+    return response;
+  } 
+  catch (error) {
+    const response = h.response({
+      status: "failure",
+      message: "Failed to get travel recommendation",
+      error: error.message,
+    });
+
+    response.code(500);
+    return response;
+  }
+}
 
   // kalau ud dikembalikan dengan aman, disunting datanya sesuai yang aku bilang
   // karena array, pakai looping utk tiap elemen atau .map bisa juga, contoh ada di bookSearch.js
@@ -329,17 +450,7 @@ async function getTravelRecommendation(request, h) {
   // TODO: kalau sudah disusun jadi array yang bersih, kembalikan jadi response ke MD
 
   // ini placeholder
-  const finalRecommendation = [];
 
-  const response = h.response({
-    status: "success",
-    message: "travel recommendation successfully returned",
-    data: finalRecommendation,
-  });
-  response.code(200);
-
-  return response;
-}
 
 //handler for stress prediction
 async function getStressPrediction(request, h) {
