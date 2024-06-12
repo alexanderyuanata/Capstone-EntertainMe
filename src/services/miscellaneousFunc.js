@@ -1,3 +1,6 @@
+const axios = require('axios');
+const { handleAxiosGetError } = require('../exceptions/ErrorHandler');
+
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -26,4 +29,37 @@ function deleteObjectField(obj, field) {
   }
 }
 
-module.exports = { getRandomIntInclusive, getFirstElement, customEncodeURIComponent, deleteObjectField }
+function getRandomString(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+      throw new Error("Input must be a non-empty array");
+  }
+  const randomIndex = Math.floor(Math.random() * arr.length);
+  return arr[randomIndex];
+}
+
+function isNotString(value) {
+  return typeof value !== "string";
+}
+
+async function sendHeartbeatCheck(url){
+  if (isNotString(url)){
+    console.error("url is not a string! cannot perform heartbeat check!");
+    return false;
+  }
+  let status = false;
+
+  await axios.get(url)
+  .then(async function (response) {
+    status = (response.status == 200);
+  })
+  .catch(function (error) {
+    handleAxiosGetError();
+  })
+  .finally(function () {
+    // always executed
+  });
+
+  return status;
+}
+
+module.exports = { getRandomIntInclusive, getFirstElement, customEncodeURIComponent, deleteObjectField, getRandomString, isNotString, sendHeartbeatCheck }

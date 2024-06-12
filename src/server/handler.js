@@ -9,15 +9,36 @@ const {
   getStressSurvey,
   getPreferencesSurvey,
 } = require("../services/userService");
-const { getRandomIntInclusive } = require("../services/miscellaneousFunc");
+const { getRandomIntInclusive, sendHeartbeatCheck } = require("../services/miscellaneousFunc");
 const fetchStressPrediction = require("../public_api/stressPrediction");
+const { searchDestinations } = require("../public_api/destinationSearch");
 
 function returnResponse(request, h) {
   const response = h.response({
     status: "success",
-    message: "this is a response",
+    message: "backend server is up",
   });
   response.code(200);
+
+  return response;
+}
+
+async function warmupHandler(request, h) {
+  let serviceStatus = {};
+
+  serviceStatus.book_api = await sendHeartbeatCheck("https://book-recommendation-4nqq6tztla-et.a.run.app/check");
+  serviceStatus.movie_api = await sendHeartbeatCheck("https://movie-api-4nqq6tztla-et.a.run.app/check");
+  serviceStatus.travel_api = await sendHeartbeatCheck("https://travel-recommendation-4nqq6tztla-et.a.run.app/check");
+  serviceStatus.stress_api = await sendHeartbeatCheck("https://stress-prediction-4nqq6tztla-et.a.run.app/check");
+
+  let statusCode = 200;
+  (serviceStatus.book_api && serviceStatus.movie_api && serviceStatus.travel_api && serviceStatus.stress_api) ? statusCode = 200 : statusCode = 503;
+
+  const response = h.response({
+    message: "returning status of backend services",
+    services: serviceStatus,
+  });
+  response.code(statusCode);
 
   return response;
 }
@@ -258,9 +279,6 @@ async function getMoviesRecommendation(request, h) {
 
 //handler for travel
 async function getTravelRecommendation(request, h) {
-  //TODO: ini handler utk /recommend/travel
-  //handler ini akan menyarankan lokasi jalan2 pengguna berdasarkan survey
-
   //ambil uid dari request param, cek, klo gdk return 404 baru bilang uid gdk di database
   const uid = request.query.uid;
 
@@ -276,10 +294,8 @@ async function getTravelRecommendation(request, h) {
     return response;
   }
 
-  // aman, lanjut
-
   // TODO, ambil data dari database disini, hanya berkaitan dengan survey lokasi wisata
-  const surveyData = await getPreferencesSurvey(user_id);
+  const surveyData = await getPreferencesSurvey(uid);
   if (surveyData == undefined) {
     const response = h.response({
       status: "failure",
@@ -291,114 +307,55 @@ async function getTravelRecommendation(request, h) {
   }
 
   const {
-    travel_first_question,
-    travel_second_question,
-    travel_third_question,
-    travel_fourth_question,
-    travel_fifth_question,
-    travel_sixth_question,
+    tour_first_question,
+    tour_second_question,
+    tour_third_question,
+    tour_fourth_question,
+    tour_fifth_question,
+    tour_sixth_question,
   } = surveyData;
   
   let travelPref ={};
 
-  let text = "";
-  if (travel_first_question == "No, I need recomendations") {
-    travelPref.place_name = travel_first_question;
-  } else {
-    text = travel_first_question;
+  tour_first_question == "No, I need recommendations"
+    ? travelPref.text = "random"
+    : travelPref.text = tour_first_question;
+  
+
+  if (tour_second_question != "No, I need recommendations") {
+    travelPref.text = travelPref.text.concat(" ", tour_second_question);
   }
 
-  if (travel_second_question== "No, I need recomendations") {
-    travelPref.activity_type = "";
-  } else {
-    travelPref.activity_type = travel_second_question;
-  }
+  travelPref.text = travelPref.text.concat(" ", tour_third_question);
 
-  travelPref.category = travel_third_question;
+  travelPref.city = tour_fourth_question;
 
-  travelPref.city = travel_fourth_question;
+  travelPref.rating_preference = tour_fifth_question;
 
-  switch (travel_fifth_question) {
-    case "3 stars and above":
-      travelPref.rating_preference = 3;
-      break;
-    case "4 stars and above":
-      travelPref.rating_preference = 4;
-      break;
-    case "5 stars":
-      travelPref.rating_preference = 5;
-      break;
-    default:
-      travelPref.rating_preference = 0;
-      break;
-  }
+  travelPref.review_preference = tour_sixth_question;
 
-  switch (travel_sixth_question) {
-    case "More than 10 reviews":
-      travelPref.review_preference = 10;
-      break;
-    case "More than 20 reviews":
-      travelPref.review_preference = 20;
-      break;
-    default:
-      travelPref.review_preference = 0;
-      break;
-  }
   console.log(travelPref);
 
-
-  // TODO, susun jadi json body yg formatnya seperti ini, utk isinya silakan lihat dokumentasi dari tim ML
-  const jsonBody = {
-    text: `Saya ingin pergi ke tempat yang ${text}.`,
-    city: travelPref.city,
-    rating_preference: travelPref.rating_preference,
-    review_preference: travelPref.review_preference
-  };
-  console.log(jsonBody);
-  // "text" itu HARUS ADA, kalau nggak ada modelnya g kerja, pastiin minimal text ada, kalau gdk balekin 400 aja
-  // {
-    if (!text) {
-      const response = h.response({
-        status: "failure",
-        message: "text is required for the model to work"
-      });
-      response.code(400);
-      return response;
-    }
-  //   "text": "Saya ingin pergi ke tempat yang berhubungan dengan sejarah dan budaya.",
-  //   "city": "Jakarta",
-  //   "rating_preference": "4 stars and above",
-  //   "review_preference": "More than 20 reviews"
-  // }
-
-  
-
-  
+  if (!travelPref.text) {
+    const response = h.response({
+      status: "failure",
+      message: "text is required for the model to work"
+    });
+    response.code(400);
+    return response;
+  }
 
   // TODO buat POST request dengan body pakai json di atas ke https://travel-recommendation-4nqq6tztla-et.a.run.app?key=API_KEY
   // api key dalam bentuk environment variable (ini ada dalam .gitignore, bisa dibuat di lokal buat ujicoba tapi jangan dipush)
   // untuk .env ada sendiri di cloud, aku yg samain, yg penting API_KEY jangan di expose di code (best practice)
   try {
-    const apiKey = process.env.TRAVEL_APIKEY;
-    const apiUrl = `https://travel-recommendation-4nqq6tztla-et.a.run.app key=${apiKey}`;
-  // handle semua kejadian dalam request (time out, failure, etc sesuai yg lu pikirin)
-    const apiResponse = await axios.post(apiUrl, jsonBody)
-    const arrayElement = {
-      City: arrayElement.City,
-      Coordinate: arrayElement.Coordinate,
-      Description: arrayElement.Description,
-      Place_Name: arrayElement.Place_Name,
-      Price: arrayElement.Price,
-      Rating_Count: arrayElement.Rating_Count,
-      Ratings: arrayElement.Ratings,
-      Time_Minutes: arrayElement.Time_Minutes
-    };
-    const finalRecommendation = apiResponse;
+    const recommendedLocations = await searchDestinations(travelPref);
 
     const response = h.response({
       status: "success",
       message: "travel recommendation successfully returned",
-      data: finalRecommendation,
+      location_count: recommendedLocations.length,
+      recommendations: recommendedLocations,
     });
 
     response.code(200);
@@ -415,41 +372,6 @@ async function getTravelRecommendation(request, h) {
     return response;
   }
 }
-
-  // kalau ud dikembalikan dengan aman, disunting datanya sesuai yang aku bilang
-  // karena array, pakai looping utk tiap elemen atau .map bisa juga, contoh ada di bookSearch.js
-  // contoh elemen array:
-  // {
-  //   "Categories": "Culture", !BUANG
-  //   "Categories_Label": 0, !BUANG
-  //   "City": "Jakarta",
-  //   "Coordinate": "{'lat': -6.137644799999999, 'lng': 106.8171245}",
-  //   "Description": "The old city in Jakarta, which is also called Kota Tua, is centered on Alun-Alun Fatahillah, which is a busy square with routine performances of traditional dances. The Jakarta History Museum is a Dutch-era building with paintings and antiques, while the Wayang Museum displays Javanese wooden puppets. Glodok Village, or Chinatown, is famous for its street food, such as dumplings and fried noodles. Nearby, there are schooners and fishing boats in the quaint Sunda Kelapa harbor",
-  //   "Lat": -61376448, !BUANG
-  //   "Long": 1068171245, !BUANG
-  //   "Place_Name": "Kota Tua",
-  //   "Price": 0,
-  //   "Rating_Count": 25,
-  //   "Ratings": 46,
-  //   "Time_Minutes": 90.0,
-  //   "_1": 2 !BUANG
-  // },
-
-  // hasil akhirnya
-  // {
-  //   "City": "Jakarta",
-  //   "Coordinate": "{'lat': -6.137644799999999, 'lng': 106.8171245}",
-  //   "Description": "The old city in Jakarta, which is also called Kota Tua, is centered on Alun-Alun Fatahillah, which is a busy square with routine performances of traditional dances. The Jakarta History Museum is a Dutch-era building with paintings and antiques, while the Wayang Museum displays Javanese wooden puppets. Glodok Village, or Chinatown, is famous for its street food, such as dumplings and fried noodles. Nearby, there are schooners and fishing boats in the quaint Sunda Kelapa harbor",
-  //   "Place_Name": "Kota Tua",
-  //   "Price": 0,
-  //   "Rating_Count": 25,
-  //   "Ratings": 46,
-  //   "Time_Minutes": 90.0,
-  // },
-
-  // TODO: kalau sudah disusun jadi array yang bersih, kembalikan jadi response ke MD
-
-  // ini placeholder
 
 
 //handler for stress prediction
@@ -625,6 +547,7 @@ async function getStressPrediction(request, h) {
 
 module.exports = {
   returnResponse,
+  warmupHandler,
   getBooksRecommendation,
   getMoviesRecommendation,
   getTravelRecommendation,

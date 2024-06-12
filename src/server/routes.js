@@ -1,10 +1,15 @@
-const { returnResponse, getBooksRecommendation, getTravelRecommendation, getStressPrediction, getMoviesRecommendation,  } = require('./handler')
+const { returnResponse, warmupHandler, getBooksRecommendation, getTravelRecommendation, getStressPrediction, getMoviesRecommendation,  } = require('./handler')
 
 const routes = [
   {
     path: '/check',
     method: 'GET',
     handler: returnResponse,
+  },
+  {
+    path: '/warmup',
+    method: 'GET',
+    handler: warmupHandler,
   },
   {
     path: '/recommend/books',
