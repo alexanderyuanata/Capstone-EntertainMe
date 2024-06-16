@@ -1,17 +1,22 @@
-const { searchBooks, getBook } = require("../public_api/bookSearch");
-const {
-  searchMovies,
-} = require("../public_api/movieSearch");
+const { searchBooks } = require("../public_api/bookSearch");
+const { searchMovies } = require("../public_api/movieSearch");
 
 const axios = require("axios");
+
 const {
   checkUid,
   getStressSurvey,
   getPreferencesSurvey,
 } = require("../services/userService");
-const { getRandomIntInclusive, sendHeartbeatCheck } = require("../services/miscellaneousFunc");
+
+const {
+  getRandomIntInclusive,
+  sendHeartbeatCheck,
+} = require("../services/miscellaneousFunc");
+
 const fetchStressPrediction = require("../public_api/stressPrediction");
 const { searchDestinations } = require("../public_api/destinationSearch");
+
 
 function returnResponse(request, h) {
   const response = h.response({
@@ -26,13 +31,30 @@ function returnResponse(request, h) {
 async function warmupHandler(request, h) {
   let serviceStatus = {};
 
-  serviceStatus.book_api = await sendHeartbeatCheck("https://book-recommendation-4nqq6tztla-et.a.run.app/check");
-  serviceStatus.movie_api = await sendHeartbeatCheck("https://movie-api-4nqq6tztla-et.a.run.app/check");
-  serviceStatus.travel_api = await sendHeartbeatCheck("https://travel-recommendation-4nqq6tztla-et.a.run.app/check");
-  serviceStatus.stress_api = await sendHeartbeatCheck("https://stress-prediction-4nqq6tztla-et.a.run.app/check");
+  serviceStatus.book_api = await sendHeartbeatCheck(
+    "https://book-recommendation-4nqq6tztla-et.a.run.app/check",
+    "https://book-recommendation-4nqq6tztla-et.a.run.app"
+  );
+  serviceStatus.movie_api = await sendHeartbeatCheck(
+    "https://movie-api-4nqq6tztla-et.a.run.app/check",
+    "https://movie-api-4nqq6tztla-et.a.run.app"
+  );
+  serviceStatus.travel_api = await sendHeartbeatCheck(
+    "https://travel-recommendation-4nqq6tztla-et.a.run.app/check",
+    "https://travel-recommendation-4nqq6tztla-et.a.run.app"
+  );
+  serviceStatus.stress_api = await sendHeartbeatCheck(
+    "https://stress-prediction-4nqq6tztla-et.a.run.app/check",
+    "https://stress-prediction-4nqq6tztla-et.a.run.app"
+  );
 
   let statusCode = 200;
-  (serviceStatus.book_api && serviceStatus.movie_api && serviceStatus.travel_api && serviceStatus.stress_api) ? statusCode = 200 : statusCode = 503;
+  serviceStatus.book_api &&
+  serviceStatus.movie_api &&
+  serviceStatus.travel_api &&
+  serviceStatus.stress_api
+    ? (statusCode = 200)
+    : (statusCode = 503);
 
   const response = h.response({
     message: "returning status of backend services",
@@ -182,14 +204,13 @@ async function getMoviesRecommendation(request, h) {
     movie_fourth_question,
     movie_fifth_question,
     movie_sixth_question,
-    movie_seventh_question
-  }
-  = surveyData;
+    movie_seventh_question,
+  } = surveyData;
 
   let inputData = {};
 
   // get the year of the movie
-  switch(movie_first_question){
+  switch (movie_first_question) {
     case "Last 5 years":
       inputData.year = 2019;
       break;
@@ -208,7 +229,7 @@ async function getMoviesRecommendation(request, h) {
   }
 
   // get the runtime of the movie
-  switch(movie_second_question){
+  switch (movie_second_question) {
     case "Short (less than 90 minutes)":
       inputData.runtime = 90;
       break;
@@ -227,34 +248,34 @@ async function getMoviesRecommendation(request, h) {
   inputData.genre = movie_third_question;
 
   // get the rating of the movie
-  inputData.rating = parseInt(movie_fourth_question)
+  inputData.rating = parseInt(movie_fourth_question);
 
-  if (movie_fifth_question != "No, I need recommendations"){
+  if (movie_fifth_question != "No, I need recommendations") {
     inputData.director = movie_fifth_question;
   }
 
-  if (movie_sixth_question != "No, I need recommendations"){
+  if (movie_sixth_question != "No, I need recommendations") {
     inputData.star = movie_sixth_question;
   }
 
-  switch(movie_seventh_question){
+  switch (movie_seventh_question) {
     case "Movies that are lesser-known":
-      inputData.votes = getRandomIntInclusive(0,5000);
+      inputData.votes = getRandomIntInclusive(0, 5000);
       break;
     case "Movies that are talked about quite often":
-      inputData.votes = getRandomIntInclusive(5001,10000);
+      inputData.votes = getRandomIntInclusive(5001, 10000);
       break;
     case "Popular movies that many people know about":
-      inputData.votes = getRandomIntInclusive(10001,15000);
+      inputData.votes = getRandomIntInclusive(10001, 15000);
       break;
     default:
-      inputData.votes = getRandomIntInclusive(5001,10000);
+      inputData.votes = getRandomIntInclusive(5001, 10000);
       break;
   }
 
   try {
     let movies = await searchMovies(inputData);
-  
+
     const response = h.response({
       status: "success",
       message: "successfully retrieved movie recommendation from model",
@@ -264,8 +285,7 @@ async function getMoviesRecommendation(request, h) {
 
     response.code(200);
     return response;
-  }
-  catch (error) {
+  } catch (error) {
     const response = h.response({
       status: "failure",
       message: "something went wrong when getting the recommendations",
@@ -314,13 +334,12 @@ async function getTravelRecommendation(request, h) {
     tour_fifth_question,
     tour_sixth_question,
   } = surveyData;
-  
-  let travelPref ={};
+
+  let travelPref = {};
 
   tour_first_question == "No, I need recommendations"
-    ? travelPref.text = "random"
-    : travelPref.text = tour_first_question;
-  
+    ? (travelPref.text = "random")
+    : (travelPref.text = tour_first_question);
 
   if (tour_second_question != "No, I need recommendations") {
     travelPref.text = travelPref.text.concat(" ", tour_second_question);
@@ -339,7 +358,7 @@ async function getTravelRecommendation(request, h) {
   if (!travelPref.text) {
     const response = h.response({
       status: "failure",
-      message: "text is required for the model to work"
+      message: "text is required for the model to work",
     });
     response.code(400);
     return response;
@@ -360,8 +379,7 @@ async function getTravelRecommendation(request, h) {
 
     response.code(200);
     return response;
-  } 
-  catch (error) {
+  } catch (error) {
     const response = h.response({
       status: "failure",
       message: "Failed to get travel recommendation",
@@ -372,7 +390,6 @@ async function getTravelRecommendation(request, h) {
     return response;
   }
 }
-
 
 //handler for stress prediction
 async function getStressPrediction(request, h) {

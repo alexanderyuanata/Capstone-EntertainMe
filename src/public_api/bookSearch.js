@@ -2,27 +2,42 @@ const axios = require("axios");
 const { handleAxiosGetError } = require("../exceptions/ErrorHandler");
 const { checkUid } = require ("../services/userService");
 const { getFirstElement, customEncodeURIComponent } = require('../services/miscellaneousFunc');
+const { requestAuthToken } = require("../services/authenticateService");
 
 require('dotenv').config();
 
-//constants
+// constants
 const BOOK_LIMIT = 8;
 
+// configure axios instance
 const instance = axios.create({
   baseURL: process.env.BOOK_MODEL_URL || "http://localhost:5000",
-  timeout: 1000,
+  timeout: 10000,
 });
 
 //a function to search books from the database
 async function searchBooks(inputData) {
   let titleDetails = [];
+  let token;
 
-  //send a get request to the gateway API
+  // try and get the authorization token
+  try {
+    token = await requestAuthToken(process.env.BOOK_MODEL_URL.concat("/recommend"), process.env.BOOK_MODEL_URL);
+  }
+  catch (error){
+    console.error(error.message);
+    throw error;
+  }
+
+  //send an authenticated POST request to the book recommendation model API
   await instance
     .post(
       "/recommend", 
       inputData,
       {
+      headers:{
+        'Authorization':`Bearer ${token}`,
+      },
       params: {
         key: process.env.BOOK_API_KEY,
       },
@@ -35,9 +50,10 @@ async function searchBooks(inputData) {
 
       //get the array of books that the public API returns
       let bookResult = response.data.recommendations;
-      const leftover = BOOK_LIMIT - bookResult.length;
       
-
+      // check the number of books found, if it's less than 8 then get
+      // random books
+      const leftover = BOOK_LIMIT - bookResult.length;
       if (leftover > 0){
         const filler = (await getRandomBooks()).slice(0, leftover);
         console.log("added some stuff");
@@ -46,10 +62,11 @@ async function searchBooks(inputData) {
 
       //process data to get the cover and detail
       if (Array.isArray(bookResult)) {
-        // Use map instead of forEach to return an array of promises
+        // get additional book details using google book API
         const promises = bookResult.map(async (title) => {
           const detail = await getBook(title.Book);
 
+          // check if we found the specific book, if not then just put it as undefined
           if (detail == undefined) {
             title.coverUrl = undefined;
             title.publishYear = undefined;
@@ -58,16 +75,16 @@ async function searchBooks(inputData) {
             return;
           }
 
+          // else, assign additional details
           title.coverUrl = detail.coverUrl;
           title.publishYear = detail.publishYear;
           title.infoUrl = detail.infoUrl;
         });
 
-        // Wait for all promises to resolve before proceeding
         await Promise.all(promises);
       }
 
-      //assign processed data
+      //assign processed data to the array element
       titleDetails = bookResult;
     })
     .catch((error) => {
@@ -89,7 +106,7 @@ async function getBook(title) {
 
   let details = {};
 
-  //send a call to the google API
+  //send a call to the google books API
   await axios
     .get("https://www.googleapis.com/books/v1/volumes", {
       params: {
@@ -136,8 +153,18 @@ async function getBook(title) {
 
 async function getRandomBooks(){
   let titleDetails = [];
+  let token;
 
-  //send a get request to the gateway API
+  // try and get the authorization token
+  try {
+    token = await requestAuthToken(process.env.BOOK_MODEL_URL.concat("/recommend"), process.env.BOOK_MODEL_URL);
+  }
+  catch (error){
+    console.error(error.message);
+    throw error;
+  }
+
+  //send a POST request to the gateway API to get random books
   await instance
     .post(
       "/recommend", 
@@ -145,12 +172,15 @@ async function getRandomBooks(){
         text:" "
       },
       {
+      headers:{
+        'Authorization':`Bearer ${token}`,
+      },
       params: {
         key: process.env.BOOK_API_KEY,
       },
     })
     .then(async (response) => {
-      //if the server doesn't return a successful query
+      // if the server doesn't return a successful query
       if (response.status != 200) {
         throw err;
       }
@@ -158,7 +188,9 @@ async function getRandomBooks(){
       //get the array of books that the public API returns
       const bookResult = response.data.recommendations;
 
-      //assign processed data
+      // we don't need to preprocess the random data because it will be handled by the original handler
+
+      // assign raw data
       titleDetails = bookResult;
     })
     .catch((error) => {

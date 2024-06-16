@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { handleAxiosGetError } = require('../exceptions/ErrorHandler');
+const { requestAuthToken } = require('./authenticateService');
 
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
@@ -41,23 +42,35 @@ function isNotString(value) {
   return typeof value !== "string";
 }
 
-async function sendHeartbeatCheck(url){
+async function sendHeartbeatCheck(url, domain){
   if (isNotString(url)){
     console.error("url is not a string! cannot perform heartbeat check!");
     return false;
   }
   let status = false;
 
-  await axios.get(url)
-  .then(async function (response) {
-    status = (response.status == 200);
-  })
-  .catch(function (error) {
-    handleAxiosGetError();
-  })
-  .finally(function () {
-    // always executed
-  });
+  try {
+    const token = await requestAuthToken(url, domain);
+
+    await axios.get(url,{
+      headers:{
+        'Authorization':`Bearer ${token}`,
+      }
+    })
+    .then(async function (response) {
+      status = (response.status == 200);
+    })
+    .catch(function (error) {
+      handleAxiosGetError();
+    })
+    .finally(function () {
+      // always executed
+    });
+  }
+  catch(error){
+    console.error('failed in fetching auth token!');
+    return false;
+  }
 
   return status;
 }
