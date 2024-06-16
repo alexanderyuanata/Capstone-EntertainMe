@@ -19,7 +19,7 @@ async function searchMovies(inputData){
 
   // try and get the authorization token
   try {
-    token = await requestAuthToken(process.env.STRESS_MODEL_URL.concat("/recommend"), process.env.MOVIE_MODEL_URL);
+    token = await requestAuthToken(process.env.MOVIE_MODEL_URL.concat("/recommend"), process.env.MOVIE_MODEL_URL);
   }
   catch (error){
     console.error(error.message);
