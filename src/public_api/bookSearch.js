@@ -143,6 +143,13 @@ async function getBook(title) {
     .catch((error) => {
       console.log('error in getting book detail');
       handleAxiosGetError(error);
+
+      //return some default values
+      return {
+        coverUrl: "https://books.google.co.id/googlebooks/images/no_cover_thumb.gif",
+        year: 0,
+        infoUrl: "",
+      };
     })
     .finally(() => {
       

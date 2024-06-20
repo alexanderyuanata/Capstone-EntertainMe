@@ -82,6 +82,7 @@ async function getMovieCover(title){
   let coverUrl;
 
   await axios.get(`http://www.omdbapi.com`,{
+    timeout: 1000,
     params: {
       apikey: process.env.OMDB_KEY,
       t: customEncodeURIComponent(title),
@@ -100,6 +101,9 @@ async function getMovieCover(title){
   .catch((error)=>{
     console.error("movie cover request error");
     handleAxiosGetError(error);
+
+    //return an empty url
+    return "";
   })
   .finally(()=>{
     //nothing
