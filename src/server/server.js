@@ -1,41 +1,55 @@
-const Hapi = require('@hapi/hapi');
-const routes = require('../server/routes');
+const Hapi = require("@hapi/hapi");
+const routes = require("../server/routes");
 
-require('dotenv').config(); 
+const Inert = require("@hapi/inert");
+const Vision = require("@hapi/vision");
+const HapiSwagger = require("hapi-swagger");
 
+require("dotenv").config();
 
 (async () => {
-    const server = Hapi.server({
-        port: parseInt(process.env.PORT) || 8080,
-        host: '0.0.0.0',
-        routes: {
-            cors: {
-              origin: ['*'],
-            },
-        },
-    });
- 
-    //get model on server start
-    /*
-    const model = await loadModel();
-    server.app.model = model;
- 
-    console.log('model loaded.');
-    */
+  const server = Hapi.server({
+    port: parseInt(process.env.PORT) || 8080,
+    host: "0.0.0.0",
+    routes: {
+      cors: {
+        origin: ["*"],
+      },
+    },
+  });
 
-    //fetch routes
-    server.route(routes);
+  //fetch routes
+  server.route(routes);
 
-    //handle errors
-    server.ext('onPreResponse', function(request, h){
-      //put error handlers here
+  //handle errors
+  server.ext("onPreResponse", function (request, h) {
+    //put error handlers here
 
-      return h.continue;
-    });
- 
-    //start the server
+    return h.continue;
+  });
+
+  //generate documentation with swagger
+  const swaggerOptions = {
+    info: {
+      title: "EntertainMe API Documentation",
+    },
+  };
+
+  await server.register([
+    Inert,
+    Vision,
+    {
+      plugin: HapiSwagger,
+      options: swaggerOptions,
+    },
+  ]);
+
+  try {
     await server.start();
-    console.log(`server started at: ${server.info.uri}`);
+    console.log("Server running at:", server.info.uri);
+  } catch (err) {
+    console.log(err);
+  }
 })();
 
 /// note that if the server doesnt start because of missing dlls
