@@ -33,6 +33,11 @@ To run this backend, you need to configure the following `.env` file
     
     GOOGLE_APPLICATION_CREDENTIALS=_A LOCAL ROUTE TO YOUR SERVICE ACCOUNT KEY FILE*
 
+The environmental variables above are read whenever the backend API makes a request. Additionally, the backend API needs a realtime database and a service account file to access that database.
+
+If the ML Model URLs are not provided, the backend will alternatively use [http://localhost:5000](http://localhost:5000) as an endpoint.
+
+
 ## Local Installation
 Clone the repository into the current directory
 
