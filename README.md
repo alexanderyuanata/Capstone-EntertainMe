@@ -35,20 +35,32 @@ To run this backend, you need to configure the following `.env` file
 
 ## Local Installation
 Clone the repository into the current directory
+
     git clone https://github.com/entertainmeproject/capstone-entertainme-backendapi.git
+
 Navigate into the cloned directory
+
     cd capstone-entertainme-backendapi
+
 Run the Backend API
+
     npm run start-dev
+
 The API will run using nodemon on [http://localhost:8080](http://localhost:8080), you can try [http://localhost:8080/check](http://localhost:8080/check) to see if the API is currently running.
 
 Alternatively, you can run it with
+
     npm run start
 
 ## GCP Installation
 Clone the repository into the `Cloud Shell` directory
+
     git clone https://github.com/entertainmeproject/capstone-entertainme-backendapi.git
+
 Navigate into the cloned directory
+
     cd capstone-entertainme-backendapi
+
 Deploy it with App Engine
+
     gcloud app deploy
