@@ -31,12 +31,17 @@ To run this backend, you need to configure the following `.env` file
     TRAVEL_API_KEY=_YOUR PRIVATE TRAVEL API KEY
     TRAVEL_MODEL_URL=_YOUR PRIVATE TRAVEL MODEL URL
     
-    GOOGLE_APPLICATION_CREDENTIALS=_A LOCAL ROUTE TO YOUR SERVICE ACCOUNT KEY FILE*
+    GOOGLE_APPLICATION_CREDENTIALS=_A LOCAL ROUTE TO YOUR SERVICE ACCOUNT KEY FILE
 
 The environmental variables above are read whenever the backend API makes a request. Additionally, the backend API needs a realtime database and a service account file to access that database.
 
-If the ML Model URLs are not provided, the backend will alternatively use [http://localhost:5000](http://localhost:5000) as an endpoint.
+If the ML Model URLs are not provided, the backend will alternatively use [http://localhost:5000](http://localhost:5000) as an endpoint, if you want to run this locally then make sure an ML Model is up and listening on that address. If you want to disable the validation and requirement for UIDs, feel free to fork the repository and comment out the function that checks for UID and rewrite the handler to receive data from a json payload or other alternatives.
 
+## ML API Documentation
+- [Book Recommendation API](https://github.com/entertainmeproject/ml-api-book)
+- [Movie Recommendation API](https://github.com/entertainmeproject/ml-api-movie)
+- [Travel Recommendation API](https://github.com/entertainmeproject/ml-api-travel)
+- [Stress Prediction API](https://github.com/entertainmeproject/ml-api-stress)
 
 ## Local Installation
 Clone the repository into the current directory
