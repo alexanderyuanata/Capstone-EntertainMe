@@ -38,10 +38,10 @@ The environmental variables above are read whenever the backend API makes a requ
 If the ML Model URLs are not provided, the backend will alternatively use [http://localhost:5000](http://localhost:5000) as an endpoint, if you want to run this locally then make sure an ML Model is up and listening on that address. If you want to disable the validation and requirement for UIDs, feel free to fork the repository and comment out the function that checks for UID and rewrite the handler to receive data from a json payload or other alternatives.
 
 ## ML API Documentation
+- [Stress Prediction API](https://github.com/entertainmeproject/ml-api-stress)
 - [Book Recommendation API](https://github.com/entertainmeproject/ml-api-book)
 - [Movie Recommendation API](https://github.com/entertainmeproject/ml-api-movie)
 - [Travel Recommendation API](https://github.com/entertainmeproject/ml-api-travel)
-- [Stress Prediction API](https://github.com/entertainmeproject/ml-api-stress)
 
 ## Local Installation
 Clone the repository into the current directory
