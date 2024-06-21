@@ -8,6 +8,12 @@ This is the backend API used in the EntertainMe project that is hosted on App En
 - `Secret Manager` to obscure API keys
 - `Firebase` to store user data
 
+## ML API Documentation
+- [Stress Prediction API](https://github.com/entertainmeproject/ml-api-stress)
+- [Book Recommendation API](https://github.com/entertainmeproject/ml-api-book)
+- [Movie Recommendation API](https://github.com/entertainmeproject/ml-api-movie)
+- [Travel Recommendation API](https://github.com/entertainmeproject/ml-api-travel)
+
 ## Third Party/Public APIs Utilized
 - [OMDB API](https://www.omdbapi.com/)
 - [Google Books API](https://developers.google.com/books)
@@ -36,12 +42,6 @@ To run this backend, you need to configure the following `.env` file
 The environmental variables above are read whenever the backend API makes a request. Additionally, the backend API needs a realtime database and a service account file to access that database.
 
 If the ML Model URLs are not provided, the backend will alternatively use [http://localhost:5000](http://localhost:5000) as an endpoint, if you want to run this locally then make sure an ML Model is up and listening on that address. If you want to disable the validation and requirement for UIDs, feel free to fork the repository and comment out the function that checks for UID and rewrite the handler to receive data from a json payload or other alternatives.
-
-## ML API Documentation
-- [Stress Prediction API](https://github.com/entertainmeproject/ml-api-stress)
-- [Book Recommendation API](https://github.com/entertainmeproject/ml-api-book)
-- [Movie Recommendation API](https://github.com/entertainmeproject/ml-api-movie)
-- [Travel Recommendation API](https://github.com/entertainmeproject/ml-api-travel)
 
 ## Local Installation
 Clone the repository into the current directory
